@@ -41,9 +41,10 @@ export async function execute(interaction) {
 
     return new EmbedBuilder()
       .setTitle(`Help - ${catName} (${start + 1}-${Math.min(start + ITEMS_PER_PAGE, cmds.length)} of ${cmds.length})`)
-      .setColor(0x00ff00)
+      .setColor(0x26d3d9)
       .setDescription(pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n"))
-      .setFooter({ text: `Page ${page + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` });
+      .setFooter({ text: `Page ${page + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` })
+      .setImage("https://example.com/tvoja-slika.png"); // ← tvoja slika ovde
   };
 
   const rowSelect = new ActionRowBuilder().addComponents(

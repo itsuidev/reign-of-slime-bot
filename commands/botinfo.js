@@ -10,7 +10,7 @@ export async function execute(interaction) {
   const embed = new EmbedBuilder()
     .setTitle("Great Slime of Wisdom")
     .setDescription("Official Reign of Slime helper bot.")
-    .setColor(0x00ff00)
+    .setColor(0x26d3d9)
     .addFields(
       { name: "Author", value: "Itsui" },
       { name: "Version", value: "0.0.1" }
