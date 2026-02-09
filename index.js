@@ -25,8 +25,15 @@ client.commands = new Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 
 for (const file of commandFiles) {
-  const command = await import(`./commands/${file}`);
-  client.commands.set(command.data.name, command);
+  const commandModule = await import(`./commands/${file}`);
+  
+  // Ako koristiš named exports
+  if (!commandModule.data || !commandModule.execute) {
+    console.warn(`❌ Command file ${file} is missing data or execute`);
+    continue;
+  }
+
+  client.commands.set(commandModule.data.name, commandModule);
 }
 
 client.once("clientReady", async () => {
