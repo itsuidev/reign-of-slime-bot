@@ -3,45 +3,62 @@ import fs from "fs";
 import "dotenv/config";
 import express from "express";
 
+/////////////////////
+// Express server
 const app = express();
-
-// Ruta za health check
-app.get("/", (req, res) => {
-  res.send("✅ Bot is running!");
-});
-
-// Render / Heroku port
+app.get("/", (req, res) => res.send("✅ Bot is running!"));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Express server running on port ${PORT}`));
 
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
-});
-
-// Kolekcija komandi
+/////////////////////
+// Discord client
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 
-// Učitaj sve komande iz foldera
-const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-
+// Load all commands
+const commandFiles = fs.readdirSync("./commands").filter(f => f.endsWith(".js"));
 for (const file of commandFiles) {
-  const commandModule = await import(`./commands/${file}`);
-  
-  // Ako koristiš named exports
-  if (!commandModule.data || !commandModule.execute) {
-    console.warn(`❌ Command file ${file} is missing data or execute`);
-    continue;
+  try {
+    const module = await import(`./commands/${file}`);
+    const cmd = module.data ? module : module.default;
+    if (!cmd?.data || !cmd?.execute) {
+      console.warn(`❌ Command ${file} missing data or execute, skipping`);
+      continue;
+    }
+    client.commands.set(cmd.data.name, cmd);
+  } catch (err) {
+    console.error(`❌ Failed to load command ${file}:`, err);
   }
-
-  client.commands.set(commandModule.data.name, commandModule);
 }
 
+/////////////////////
+// Deploy commands
+async function deployCommands() {
+  const commandsArray = [];
+  for (const [, cmd] of client.commands) {
+    if (!cmd?.data) continue;
+    commandsArray.push(cmd.data.toJSON());
+  }
+
+  const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
+  const clientId = process.env.CLIENT_ID;
+  const guildId = process.env.GUILD_ID;
+
+  try {
+    await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commandsArray });
+    console.log("✅ Commands deployed automatically");
+  } catch (error) {
+    console.error("❌ Failed to deploy commands:", error);
+  }
+}
+
+/////////////////////
+// Event handlers
 client.once("clientReady", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   await deployCommands();
 });
 
-// Slash komande handler
 client.on("interactionCreate", async interaction => {
   if (!interaction.isCommand()) return;
 
@@ -56,26 +73,6 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
+/////////////////////
+// Login
 client.login(process.env.DISCORD_TOKEN);
-
-
-async function deployCommands() {
-  const commands = [];
-  const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-
-  for (const file of commandFiles) {
-    const command = await import(`./commands/${file}`);
-    commands.push(command.data.toJSON());
-  }
-
-  const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
-  const clientId = process.env.CLIENT_ID;
-  const guildId = process.env.GUILD_ID;
-
-  try {
-    await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-    console.log("✅ Commands deployed automatically");
-  } catch (error) {
-    console.error("❌ Failed to deploy commands:", error);
-  }
-}
