@@ -33,14 +33,14 @@ export async function execute(interaction) {
       .setTitle(`Help - ${currentCategory} (${start + 1}-${Math.min(start + ITEMS_PER_PAGE, cmds.length)} of ${cmds.length})`)
       .setColor(0x00ff00)
       .setDescription(
-        pageCommands.map(cmd => `\`/${cmd.data.name}\` - ${cmd.data.description}`).join("\n")
+        pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n")
       )
       .setFooter({ text: `Page ${currentPage + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` });
 
     return embed;
   };
 
-  // Dropdown menu za kategorije
+  // Dropdown menu for categories
   const rowSelect = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("helpCategory")
@@ -48,20 +48,28 @@ export async function execute(interaction) {
       .addOptions(categoryNames.map(name => ({ label: name, value: name })))
   );
 
-  // Pagination buttons
+  // Pagination buttons (50/50 width)
   const rowButtons = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("prevPage").setLabel("⬅️ Prev").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("nextPage").setLabel("Next ➡️").setStyle(ButtonStyle.Primary)
+    new ButtonBuilder()
+      .setCustomId("prevPage")
+      .setLabel("⬅️ Prev")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji("⬅️"),
+    new ButtonBuilder()
+      .setCustomId("nextPage")
+      .setLabel("Next ➡️")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji("➡️")
   );
 
-  // Posalji prvobitni embed
+  // Send initial embed
   const message = await interaction.reply({
     embeds: [generateEmbed()],
     components: [rowSelect, rowButtons],
     fetchReply: true,
   });
 
-  // Collector za dropdown + dugmad
+  // Collector for dropdown + buttons
   const collector = message.createMessageComponentCollector({ time: 5 * 60 * 1000 });
 
   collector.on("collect", i => {
