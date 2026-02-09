@@ -4,6 +4,8 @@ export const data = new SlashCommandBuilder()
   .setName("help")
   .setDescription("Shows all commands with categories and pagination");
 
+export const category = "Information";
+
 const ITEMS_PER_PAGE = 10;
 
 export async function execute(interaction) {

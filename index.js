@@ -1,6 +1,18 @@
 import { Client, Collection, GatewayIntentBits, REST, Routes } from "discord.js";
 import fs from "fs";
 import "dotenv/config";
+import express from "express";
+
+const app = express();
+
+// Ruta za health check
+app.get("/", (req, res) => {
+  res.send("✅ Bot is running!");
+});
+
+// Render / Heroku port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`✅ Express server running on port ${PORT}`));
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
