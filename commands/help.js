@@ -12,7 +12,7 @@ export async function execute(interaction) {
   // Grupisanje komandi po kategorijama
   const categories = {};
   for (const [name, cmd] of commands) {
-    const category = cmd.data.category || "Uncategorized"; // default
+    const category = cmd.category || "Uncategorized"; // ✅
     if (!categories[category]) categories[category] = [];
     categories[category].push(cmd.data.name);
   }

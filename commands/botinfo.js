@@ -2,8 +2,9 @@ import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 
 export const data = new SlashCommandBuilder()
   .setName("botinfo")
-  .setDescription("Shows bot info.")
-  .setCategory("Information");
+  .setDescription("Shows bot info.");
+
+export const category = "Information";
 
 export async function execute(interaction) {
   const embed = new EmbedBuilder()
