@@ -11,7 +11,7 @@ const ITEMS_PER_PAGE = 10;
 export async function execute(interaction) {
   const commands = interaction.client.commands;
 
-  // Grupisanje komandi po kategorijama
+  // Group commands by category
   const categories = {};
   for (const [name, cmd] of commands) {
     const categoryName = cmd.category || "Uncategorized";
@@ -23,7 +23,7 @@ export async function execute(interaction) {
   let currentCategory = categoryNames[0];
   let currentPage = 0;
 
-  // Funkcija koja pravi embed za stranicu
+  // Function to generate embed
   const generateEmbed = () => {
     const cmds = categories[currentCategory];
     const start = currentPage * ITEMS_PER_PAGE;
@@ -40,7 +40,7 @@ export async function execute(interaction) {
     return embed;
   };
 
-  // Dropdown menu for categories
+  // Dropdown row
   const rowSelect = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("helpCategory")
@@ -48,18 +48,26 @@ export async function execute(interaction) {
       .addOptions(categoryNames.map(name => ({ label: name, value: name })))
   );
 
-  // Pagination buttons (50/50 width)
+  // Buttons row (with invisible spacers to align width)
   const rowButtons = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("prevPage")
       .setLabel("⬅️ Prev")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("spacer1")
+      .setLabel(" ")
       .setStyle(ButtonStyle.Secondary)
-      .setEmoji("⬅️"),
+      .setDisabled(true),
+    new ButtonBuilder()
+      .setCustomId("spacer2")
+      .setLabel(" ")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true),
     new ButtonBuilder()
       .setCustomId("nextPage")
       .setLabel("Next ➡️")
-      .setStyle(ButtonStyle.Secondary)
-      .setEmoji("➡️")
+      .setStyle(ButtonStyle.Primary)
   );
 
   // Send initial embed
