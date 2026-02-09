@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, AttachmentBuilder } from "discord.js";
 
 export const data = new SlashCommandBuilder()
   .setName("help")
@@ -34,6 +34,9 @@ export async function execute(interaction) {
     }
   }
 
+  // Attachment za separator sliku
+  const separatorAttachment = new AttachmentBuilder('./assets/img/separator.png'); // putanja do lokalne slike
+
   const generateEmbed = (catName, page) => {
     const cmds = categories[catName];
     const start = page * ITEMS_PER_PAGE;
@@ -44,7 +47,7 @@ export async function execute(interaction) {
       .setColor(0x26d3d9)
       .setDescription(pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n"))
       .setFooter({ text: `Page ${page + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` })
-      .setImage("../assets/img/separator.png");
+      .setImage('attachment://separator.png'); // ime fajla iz AttachmentBuilder
   };
 
   const rowSelect = new ActionRowBuilder().addComponents(
@@ -61,21 +64,26 @@ export async function execute(interaction) {
   const message = await interaction.reply({
     embeds: [generateEmbed(currentCategory, currentPage)],
     components: [rowSelect],
-    fetchReply: true,
+    files: [separatorAttachment], // dodaj attachment ovde
   });
 
   // Collector
   const collector = message.createMessageComponentCollector({ time: 5 * 60 * 1000 });
 
-  collector.on("collect", i => {
+  collector.on("collect", async i => {
     if (i.user.id !== interaction.user.id)
-      return i.reply({ content: "❌ You can't interact with this.", ephemeral: true });
+      return i.reply({ content: "❌ You can't interact with this.", flags: 64 });
 
     if (i.isStringSelectMenu()) {
       const [catName, page] = i.values[0].split("|");
       currentCategory = catName;
       currentPage = parseInt(page);
-      i.update({ embeds: [generateEmbed(currentCategory, currentPage)] });
+
+      // update embed sa istim attachmentom
+      await i.update({
+        embeds: [generateEmbed(currentCategory, currentPage)],
+        files: [separatorAttachment],
+      });
     }
   });
 }
