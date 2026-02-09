@@ -14,9 +14,9 @@ export async function execute(interaction) {
   // Grupisanje komandi po kategorijama
   const categories = {};
   for (const [name, cmd] of commands) {
-    const category = cmd.category || "Uncategorized"; // ✅
-    if (!categories[category]) categories[category] = [];
-    categories[category].push(cmd.data.name);
+    const categoryName = cmd.category || "Uncategorized";
+    if (!categories[categoryName]) categories[categoryName] = [];
+    categories[categoryName].push(cmd); // store full command object
   }
 
   const categoryNames = Object.keys(categories);
@@ -32,7 +32,9 @@ export async function execute(interaction) {
     const embed = new EmbedBuilder()
       .setTitle(`Help - ${currentCategory} (${start + 1}-${Math.min(start + ITEMS_PER_PAGE, cmds.length)} of ${cmds.length})`)
       .setColor(0x00ff00)
-      .setDescription(pageCommands.map(cmd => `\`/${cmd}\``).join("\n"))
+      .setDescription(
+        pageCommands.map(cmd => `\`/${cmd.data.name}\` - ${cmd.data.description}`).join("\n")
+      )
       .setFooter({ text: `Page ${currentPage + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` });
 
     return embed;
