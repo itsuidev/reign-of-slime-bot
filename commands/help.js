@@ -44,7 +44,7 @@ export async function execute(interaction) {
       .setColor(0x26d3d9)
       .setDescription(pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n"))
       .setFooter({ text: `Page ${page + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` })
-      .setImage("https://example.com/tvoja-slika.png"); // ← tvoja slika ovde
+      .setImage("../assets/img/separator.png");
   };
 
   const rowSelect = new ActionRowBuilder().addComponents(
