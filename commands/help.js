@@ -49,26 +49,27 @@ export async function execute(interaction) {
   );
 
   // Buttons row (with invisible spacers to align width)
-  const rowButtons = new ActionRowBuilder().addComponents(
+    const rowButtons = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId("prevPage")
-      .setLabel("⬅️ Prev")
-      .setStyle(ButtonStyle.Primary),
+        .setCustomId("prevPage")
+        .setLabel("⬅️ Prev")
+        .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId("spacer1")
-      .setLabel(" ")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(true),
+        .setCustomId("spacer1")
+        .setLabel("\u200b") // zero-width space
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(true),
     new ButtonBuilder()
-      .setCustomId("spacer2")
-      .setLabel(" ")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(true),
+        .setCustomId("spacer2")
+        .setLabel("\u200b") // zero-width space
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(true),
     new ButtonBuilder()
-      .setCustomId("nextPage")
-      .setLabel("Next ➡️")
-      .setStyle(ButtonStyle.Primary)
-  );
+        .setCustomId("nextPage")
+        .setLabel("Next ➡️")
+        .setStyle(ButtonStyle.Primary)
+    );
+
 
   // Send initial embed
   const message = await interaction.reply({
