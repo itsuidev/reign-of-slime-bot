@@ -35,7 +35,7 @@ export async function execute(interaction) {
   }
 
   // Attachment za separator sliku
-  const separatorAttachment = new AttachmentBuilder('./assets/img/separator.png'); // putanja do lokalne slike
+  const separatorAttachment = new AttachmentBuilder('./assets/img/separator.png'); // lokalni fajl
 
   const generateEmbed = (catName, page) => {
     const cmds = categories[catName];
@@ -47,7 +47,7 @@ export async function execute(interaction) {
       .setColor(0x26d3d9)
       .setDescription(pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n"))
       .setFooter({ text: `Page ${page + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` })
-      .setImage('attachment://separator.png'); // ime fajla iz AttachmentBuilder
+      .setImage('attachment://separator.png');
   };
 
   const rowSelect = new ActionRowBuilder().addComponents(
@@ -57,22 +57,28 @@ export async function execute(interaction) {
       .addOptions(options)
   );
 
-  // Send initial embed (first category, first page)
+  // Initial embed
   const firstOption = options[0].value.split("|");
   let [currentCategory, currentPage] = [firstOption[0], parseInt(firstOption[1])];
 
-  const message = await interaction.reply({
+  // Send initial embed sa attachmentom
+  await interaction.reply({
     embeds: [generateEmbed(currentCategory, currentPage)],
     components: [rowSelect],
-    files: [separatorAttachment], // dodaj attachment ovde
+    files: [separatorAttachment],
   });
+
+  // Fetch the message za collector
+  const message = await interaction.fetchReply();
 
   // Collector
   const collector = message.createMessageComponentCollector({ time: 5 * 60 * 1000 });
 
   collector.on("collect", async i => {
-    if (i.user.id !== interaction.user.id)
+    if (i.user.id !== interaction.user.id) {
+      // ephemeral flag: 64
       return i.reply({ content: "❌ You can't interact with this.", flags: 64 });
+    }
 
     if (i.isStringSelectMenu()) {
       const [catName, page] = i.values[0].split("|");
@@ -85,5 +91,11 @@ export async function execute(interaction) {
         files: [separatorAttachment],
       });
     }
+  });
+
+  collector.on("end", () => {
+    // opcionalno: onemogući dropdown kad collector istekne
+    rowSelect.components[0].setDisabled(true);
+    message.edit({ components: [rowSelect] }).catch(() => {});
   });
 }
