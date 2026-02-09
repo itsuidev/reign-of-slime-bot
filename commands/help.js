@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
 
 export const data = new SlashCommandBuilder()
   .setName("help")
@@ -19,57 +19,47 @@ export async function execute(interaction) {
     categories[categoryName].push(cmd);
   }
 
-  const categoryNames = Object.keys(categories);
-  let currentCategory = categoryNames[0];
-  let currentPage = 0;
+  // Prepare dropdown options for all pages in all categories
+  const options = [];
+  for (const [catName, cmds] of Object.entries(categories)) {
+    const totalPages = Math.ceil(cmds.length / ITEMS_PER_PAGE);
+    for (let p = 0; p < totalPages; p++) {
+      const start = p * ITEMS_PER_PAGE;
+      const end = Math.min(start + ITEMS_PER_PAGE, cmds.length);
+      options.push({
+        label: `${catName} - Page ${p + 1}`,
+        value: `${catName}|${p}`, // encode category + page
+        description: `Commands ${start + 1}-${end} of ${cmds.length}`,
+      });
+    }
+  }
 
-  // Generate embed
-  const generateEmbed = () => {
-    const cmds = categories[currentCategory];
-    const start = currentPage * ITEMS_PER_PAGE;
+  const generateEmbed = (catName, page) => {
+    const cmds = categories[catName];
+    const start = page * ITEMS_PER_PAGE;
     const pageCommands = cmds.slice(start, start + ITEMS_PER_PAGE);
 
     return new EmbedBuilder()
-      .setTitle(`Help - ${currentCategory} (${start + 1}-${Math.min(start + ITEMS_PER_PAGE, cmds.length)} of ${cmds.length})`)
+      .setTitle(`Help - ${catName} (${start + 1}-${Math.min(start + ITEMS_PER_PAGE, cmds.length)} of ${cmds.length})`)
       .setColor(0x00ff00)
       .setDescription(pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n"))
-      .setFooter({ text: `Page ${currentPage + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` });
+      .setFooter({ text: `Page ${page + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` });
   };
 
-  // Dropdown
   const rowSelect = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
-      .setCustomId("helpCategory")
-      .setPlaceholder("Select category")
-      .addOptions(categoryNames.map(name => ({ label: name, value: name })))
+      .setCustomId("helpDropdown")
+      .setPlaceholder("Select category and page")
+      .addOptions(options)
   );
 
-  // Buttons row with zero-width spacers to align
-  const rowButtons = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("prevPage")
-      .setLabel("⬅️ Prev")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId("spacer1")
-      .setLabel("\u200b")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(true),
-    new ButtonBuilder()
-      .setCustomId("spacer2")
-      .setLabel("\u200b")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(true),
-    new ButtonBuilder()
-      .setCustomId("nextPage")
-      .setLabel("Next ➡️")
-      .setStyle(ButtonStyle.Primary)
-  );
+  // Send initial embed (first category, first page)
+  const firstOption = options[0].value.split("|");
+  let [currentCategory, currentPage] = [firstOption[0], parseInt(firstOption[1])];
 
-  // Send embed
   const message = await interaction.reply({
-    embeds: [generateEmbed()],
-    components: [rowSelect, rowButtons],
+    embeds: [generateEmbed(currentCategory, currentPage)],
+    components: [rowSelect],
     fetchReply: true,
   });
 
@@ -81,19 +71,10 @@ export async function execute(interaction) {
       return i.reply({ content: "❌ You can't interact with this.", ephemeral: true });
 
     if (i.isStringSelectMenu()) {
-      currentCategory = i.values[0];
-      currentPage = 0;
-      i.update({ embeds: [generateEmbed()] });
-    }
-
-    if (i.isButton()) {
-      const cmds = categories[currentCategory];
-      const maxPage = Math.ceil(cmds.length / ITEMS_PER_PAGE) - 1;
-
-      if (i.customId === "prevPage" && currentPage > 0) currentPage--;
-      if (i.customId === "nextPage" && currentPage < maxPage) currentPage++;
-
-      i.update({ embeds: [generateEmbed()] });
+      const [catName, page] = i.values[0].split("|");
+      currentCategory = catName;
+      currentPage = parseInt(page);
+      i.update({ embeds: [generateEmbed(currentCategory, currentPage)] });
     }
   });
 }
