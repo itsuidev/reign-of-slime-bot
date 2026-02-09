@@ -16,31 +16,27 @@ export async function execute(interaction) {
   for (const [name, cmd] of commands) {
     const categoryName = cmd.category || "Uncategorized";
     if (!categories[categoryName]) categories[categoryName] = [];
-    categories[categoryName].push(cmd); // store full command object
+    categories[categoryName].push(cmd);
   }
 
   const categoryNames = Object.keys(categories);
   let currentCategory = categoryNames[0];
   let currentPage = 0;
 
-  // Function to generate embed
+  // Generate embed
   const generateEmbed = () => {
     const cmds = categories[currentCategory];
     const start = currentPage * ITEMS_PER_PAGE;
     const pageCommands = cmds.slice(start, start + ITEMS_PER_PAGE);
 
-    const embed = new EmbedBuilder()
+    return new EmbedBuilder()
       .setTitle(`Help - ${currentCategory} (${start + 1}-${Math.min(start + ITEMS_PER_PAGE, cmds.length)} of ${cmds.length})`)
       .setColor(0x00ff00)
-      .setDescription(
-        pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n")
-      )
+      .setDescription(pageCommands.map(cmd => `**/${cmd.data.name}** - ${cmd.data.description}`).join("\n"))
       .setFooter({ text: `Page ${currentPage + 1} of ${Math.ceil(cmds.length / ITEMS_PER_PAGE)}` });
-
-    return embed;
   };
 
-  // Dropdown row
+  // Dropdown
   const rowSelect = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("helpCategory")
@@ -48,43 +44,41 @@ export async function execute(interaction) {
       .addOptions(categoryNames.map(name => ({ label: name, value: name })))
   );
 
-  // Buttons row (with invisible spacers to align width)
-    const rowButtons = new ActionRowBuilder().addComponents(
+  // Buttons row with zero-width spacers to align
+  const rowButtons = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-        .setCustomId("prevPage")
-        .setLabel("⬅️ Prev")
-        .setStyle(ButtonStyle.Primary),
+      .setCustomId("prevPage")
+      .setLabel("⬅️ Prev")
+      .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
-        .setCustomId("spacer1")
-        .setLabel("\u200b") // zero-width space
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(true),
+      .setCustomId("spacer1")
+      .setLabel("\u200b")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true),
     new ButtonBuilder()
-        .setCustomId("spacer2")
-        .setLabel("\u200b") // zero-width space
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(true),
+      .setCustomId("spacer2")
+      .setLabel("\u200b")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true),
     new ButtonBuilder()
-        .setCustomId("nextPage")
-        .setLabel("Next ➡️")
-        .setStyle(ButtonStyle.Primary)
-    );
+      .setCustomId("nextPage")
+      .setLabel("Next ➡️")
+      .setStyle(ButtonStyle.Primary)
+  );
 
-
-  // Send initial embed
+  // Send embed
   const message = await interaction.reply({
     embeds: [generateEmbed()],
     components: [rowSelect, rowButtons],
     fetchReply: true,
   });
 
-  // Collector for dropdown + buttons
+  // Collector
   const collector = message.createMessageComponentCollector({ time: 5 * 60 * 1000 });
 
   collector.on("collect", i => {
-    if (i.user.id !== interaction.user.id) {
+    if (i.user.id !== interaction.user.id)
       return i.reply({ content: "❌ You can't interact with this.", ephemeral: true });
-    }
 
     if (i.isStringSelectMenu()) {
       currentCategory = i.values[0];
